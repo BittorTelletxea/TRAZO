@@ -1,5 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+  const emailjsConfig = {
+    publicKey: "yd0kX9aLI7ZaxqsPX",
+    serviceId: "service_ofei9aj",
+    templateId: "template_2oi7zuu"
+  };
+
+  if (window.emailjs) {
+    window.emailjs.init({
+      publicKey: emailjsConfig.publicKey
+    });
+  }
+
   /* =========================
      HEADER
   ========================= */
@@ -422,45 +434,53 @@ document.addEventListener("DOMContentLoaded", () => {
             ?.value ||
             "Otro proyecto";
 
-        const subject =
-          encodeURIComponent(
-            `Nuevo proyecto — ${project}`
-          );
-
-        const body =
-          encodeURIComponent(
-`Hola TRAZO.,
-
-Soy ${name}.
-${company ? `Empresa: ${company}` : ""}
-
-Proyecto:
-${project}
-
-Mi idea:
-
-${message}
-
-Email:
-${email}`
-          );
-
-        window.location.href =
-          `mailto:hola@trazo.studio?subject=${subject}&body=${body}`;
-
-        setTimeout(() => {
-
-          submitButton.disabled = false;
-
-          if (submitText) {
-            submitText.textContent =
-              "Enviar proyecto";
-          }
-
+        if (
+          !window.emailjs ||
+          Object.values(emailjsConfig).some(
+            value => value.startsWith("TU_")
+          )
+        ) {
           status.textContent =
-            "Se ha preparado tu mensaje.";
+            "Configura EmailJS para poder enviar el formulario.";
+          submitButton.disabled = false;
+          if (submitText) {
+            submitText.textContent = "Enviar proyecto";
+          }
+          return;
+        }
 
-        }, 1200);
+        const templateParams = {
+          to_email: "contacto@trazostudio.es",
+          subject: `Nuevo proyecto — ${project}`,
+          name,
+          company,
+          project,
+          message,
+          email
+        };
+
+        window.emailjs
+          .send(
+            emailjsConfig.serviceId,
+            emailjsConfig.templateId,
+            templateParams
+          )
+          .then(() => {
+            status.textContent =
+              "Mensaje enviado correctamente. Nos pondremos en contacto contigo.";
+            form.reset();
+          })
+          .catch(() => {
+            status.textContent =
+              "No se ha podido enviar el mensaje. Inténtalo de nuevo.";
+          })
+          .finally(() => {
+            submitButton.disabled = false;
+
+            if (submitText) {
+              submitText.textContent = "Enviar proyecto";
+            }
+          });
 
       }
     );
